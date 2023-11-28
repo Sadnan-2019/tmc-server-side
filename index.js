@@ -27,12 +27,19 @@ async function run() {
   try {
     await client.connect();
     const serviceCollection = client.db("trishal_medical_center").collection("services");
+    const appoinmentCollection = client.db("trishal_medical_center").collection("appoinment");
 
     app.get("/service", async(req,res)=>{
        const query={};
-       const cursor = serviceCollection.find(query);
-       const services = await cursor.toArray();
+       const service = serviceCollection.find(query);
+       const services = await service.toArray();
        res.send(services)
+    })
+    app.post("/appoinment", async(req,res)=>{
+
+      const appoinment = req.body;
+      const appinmentResult = await appoinmentCollection.insertOne(appoinment);
+      res.send(appinmentResult)
     })
 
 
