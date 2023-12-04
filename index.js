@@ -26,26 +26,44 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const serviceCollection = client.db("trishal_medical_center").collection("services");
-    const appoinmentCollection = client.db("trishal_medical_center").collection("appoinment");
+    const serviceCollection = client
+      .db("trishal_medical_center")
+      .collection("services");
+    const appoinmentCollection = client
+      .db("trishal_medical_center")
+      .collection("appoinment");
 
-    app.get("/service", async(req,res)=>{
-       const query={};
-       const service = serviceCollection.find(query);
-       const services = await service.toArray();
-       res.send(services)
-    })
-    app.post("/appoinment", async(req,res)=>{
-
+    app.get("/service", async (req, res) => {
+      const query = {};
+      const service = serviceCollection.find(query);
+      const services = await service.toArray();
+      res.send(services);
+    });
+    app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
-      const appinmentResult = await appoinmentCollection.insertOne(appoinment);
-      res.send(appinmentResult)
-    })
+      const checkAppionment = {
+        department: appoinment.department,
+        name: appoinment.name,
+        date: appoinment.date,
+        appoinment: appoinment.patients_email,
+      };
 
+      const existAppoinment = await appoinmentCollection.findOne(
+        checkAppionment
+      );
+      console.log(existAppoinment)
+      if (existAppoinment) {
+        
+        return res.send({ success: false, appoinment: existAppoinment });
+      } else {
+        const appoinmentResult = await appoinmentCollection.insertOne(
+          appoinment
+        );
+        return res.send({ success: true, appoinmentResult });
+      }
+    });
 
     console.log("database conneted");
-
-
   } finally {
   }
 }
