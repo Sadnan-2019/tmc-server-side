@@ -42,25 +42,31 @@ async function run() {
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
+        // appoinment_id: appoinment._id,
         department: appoinment.department,
         name: appoinment.name,
         date: appoinment.date,
-        appoinment: appoinment.patients_email,
+        patients: appoinment.patients_email,
       };
-
+// console.log(appoinment)
+// console.log(checkAppionment)
       const existAppoinment = await appoinmentCollection.findOne(
         checkAppionment
       );
-      console.log(existAppoinment)
+      // console.log(checkAppionment)
+      
       if (existAppoinment) {
-        
+        // console.log(existAppoinment)
+        // console.log("sdojfsfmam",existAppoinment)
         return res.send({ success: false, appoinment: existAppoinment });
-      } else {
+       
+      } 
         const appoinmentResult = await appoinmentCollection.insertOne(
           appoinment
         );
-        return res.send({ success: true, appoinmentResult });
-      }
+         res.send(appoinmentResult);
+         console.log(appoinmentResult)
+      
     });
 
     console.log("database conneted");
