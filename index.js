@@ -42,34 +42,53 @@ async function run() {
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
-        // appoinment_id: appoinment._id,
+        appoinment_id: appoinment.treatmentId,
         department: appoinment.department,
         name: appoinment.name,
         date: appoinment.date,
         patients: appoinment.patients_email,
       };
-// console.log(appoinment)
-// console.log(checkAppionment)
+      // console.log(appoinment)
+      // console.log(checkAppionment)
       const existAppoinment = await appoinmentCollection.findOne(
         checkAppionment
       );
-      // console.log(checkAppionment)
-      
+      // console.log(existAppoinment)
+
       if (existAppoinment) {
         // console.log(existAppoinment)
         // console.log("sdojfsfmam",existAppoinment)
         return res.send({ success: false, appoinment: existAppoinment });
-       
-      } 
-        const appoinmentResult = await appoinmentCollection.insertOne(
-          appoinment
-        );
-         res.send(appoinmentResult);
-         console.log(appoinmentResult)
-      
+      }
+      const appoinmentResult = await appoinmentCollection.insertOne(appoinment);
+      res.send(appoinmentResult);
+      //  console.log(appoinmentResult)
     });
 
-    console.log("database conneted");
+    app.get("/availableservices", async (req, res) => {
+      const date = req.query.date || "Dec 8 2023";
+      // fisrt step get all services
+      const availAbleServices = await serviceCollection.find().toArray();
+
+      //get the booking of the day
+      const BookingDate = { date: date };
+      const bookingAppoinments = await appoinmentCollection.find(BookingDate).toArray();
+
+
+        /// FOR EACH SERVICS FIND BOOKING
+
+        availAbleServices.forEach(availAbleService=>{
+
+          const BookedAppoinments = bookingAppoinments.filter(bk =>bk.department === availAbleService.dept_name);
+          const booked = BookedAppoinments.map(b=> b.slot);
+
+          const available= availAbleService.slots.filter(as=>!booked.includes.as)
+          availAbleService.available = available;
+        })
+      res.send(availAbleServices);
+    });
+
+    console.log("database conneted"); 
   } finally {
   }
 }
