@@ -67,23 +67,25 @@ async function run() {
 
     app.get("/availableservices", async (req, res) => {
       const date = req.query.date || "Dec 8 2023";
-      // fisrt step get all services
+      //1 fisrt step get all services
       const availAbleServices = await serviceCollection.find().toArray();
 
-      //get the booking of the day
+      //2 get the booking of the day
       const BookingDate = { date: date };
       const bookingAppoinments = await appoinmentCollection.find(BookingDate).toArray();
 
 
-        /// FOR EACH SERVICS FIND BOOKING
+        ///3 FOR EACH SERVICS FIND BOOKING
 
         availAbleServices.forEach(availAbleService=>{
 
           const BookedAppoinments = bookingAppoinments.filter(bk =>bk.department === availAbleService.dept_name);
+          console.log(BookedAppoinments)
           const booked = BookedAppoinments.map(b=> b.slot);
+          // availAbleService.booked=BookedAppoinments.map(s=> s.slot)
 
-          const available= availAbleService.slots.filter(as=>!booked.includes.as)
-          availAbleService.available = available;
+          const available= availAbleService.slots.filter(as=>!booked.includes(as))
+          availAbleService.slots = available;
         })
       res.send(availAbleServices);
     });
