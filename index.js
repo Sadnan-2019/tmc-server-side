@@ -42,31 +42,62 @@ async function run() {
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
-        appoinment_id: appoinment.treatmentId,
+        treatmentId: appoinment.treatmentId,
         department: appoinment.department,
         name: appoinment.name,
         date: appoinment.date,
-        patients: appoinment.patients_email,
+        patients_email: appoinment.patients_email,
+        patients_name: appoinment.patients_name,
       };
-      // console.log(appoinment)
-      // console.log(checkAppionment)
+   
+      console.log(checkAppionment)
       const existAppoinment = await appoinmentCollection.findOne(
         checkAppionment
       );
-      // console.log(existAppoinment)
+      console.log(existAppoinment)
 
       if (existAppoinment) {
-        // console.log(existAppoinment)
-        // console.log("sdojfsfmam",existAppoinment)
+        
         return res.send({ success: false, appoinment: existAppoinment });
       }
       const appoinmentResult = await appoinmentCollection.insertOne(appoinment);
-      res.send(appoinmentResult);
-      //  console.log(appoinmentResult)
+     return res.send({success:true,  appoinmentResult});
+      
     });
 
+    // app.post("/appointment", async (req, res) => {
+    //   try {
+    //     const appointment = req.body;
+    //     const checkAppointment = {
+    //       treatmentId: appointment.treatmentId,
+    //       department: appointment.department,
+    //       name: appointment.name,
+    //       date: appointment.date,
+    //       patients: appointment.patients_email,
+    //     };
+    
+    //     console.log("Checking Appointment:", checkAppointment);
+    
+    //     const existAppointment = await appoinmentCollection.findOne(
+    //       checkAppointment
+    //     );
+    
+    //     console.log("Existing Appointment:", existAppointment);
+    
+    //     if (existAppointment) {
+    //       return res.send({ success: false, appointment: existAppointment });
+    //     }
+    
+    //     const appointmentResult = await appoinmentCollection.insertOne(appointment);
+    //     return res.send({ success: true, appointmentResult });
+    //   } catch (error) {
+    //     console.error("Error in /appointment endpoint:", error);
+    //     return res.status(500).send({ success: false, error: "Internal Server Error" });
+    //   }
+    // });
+
     app.get("/availableservices", async (req, res) => {
-      const date = req.query.date || "Dec 8 2023";
+      const date = req.query.date || "Dec 8, 2023";
       //1 fisrt step get all services
       const availAbleServices = await serviceCollection.find().toArray();
 
