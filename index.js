@@ -111,14 +111,26 @@ async function run() {
         availAbleServices.forEach(availAbleService=>{
 
           const BookedAppoinments = bookingAppoinments.filter(bk =>bk.department === availAbleService.dept_name);
-          console.log(BookedAppoinments)
+          // console.log(BookedAppoinments)
+
+          // bookde doctor 
+          const BookedDoctor = bookingAppoinments.filter(db =>db.name === availAbleService.doctor_name);
+          // console.log(BookedDoctor)
+          // bookde slot 
           const booked = BookedAppoinments.map(b=> b.slot);
+          // bookde doctor 
+          const bookedDoctor = BookedDoctor.map(ad=> ad.name);
+          console.log(bookedDoctor)
           // availAbleService.booked=BookedAppoinments.map(s=> s.slot)
+        
 
           const available= availAbleService.slots.filter(as=>!booked.includes(as))
           availAbleService.slots = available;
+
+          // const availableDoctor= availAbleService.doctor_name.map(bb=>!bookedDoctor.includes(bb))
+          // availAbleService.doctor_name = availableDoctor;
         })
-      res.send(availAbleServices);
+      res.send(availAbleServices,);
     });
 
     console.log("database conneted"); 
