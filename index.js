@@ -126,11 +126,12 @@ async function run() {
 
           const available= availAbleService.slots.filter(as=>!booked.includes(as))
           availAbleService.slots = available;
+          availAbleService.doctor_name=bookedDoctor;
 
           // const availableDoctor= availAbleService.doctor_name.map(bb=>!bookedDoctor.includes(bb))
           // availAbleService.doctor_name = availableDoctor;
         })
-      res.send(availAbleServices,);
+      res.send(availAbleServices);
     });
 
     console.log("database conneted"); 
