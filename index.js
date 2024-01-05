@@ -65,36 +65,7 @@ async function run() {
       
     });
 
-    // app.post("/appointment", async (req, res) => {
-    //   try {
-    //     const appointment = req.body;
-    //     const checkAppointment = {
-    //       treatmentId: appointment.treatmentId,
-    //       department: appointment.department,
-    //       name: appointment.name,
-    //       date: appointment.date,
-    //       patients: appointment.patients_email,
-    //     };
-    
-    //     console.log("Checking Appointment:", checkAppointment);
-    
-    //     const existAppointment = await appoinmentCollection.findOne(
-    //       checkAppointment
-    //     );
-    
-    //     console.log("Existing Appointment:", existAppointment);
-    
-    //     if (existAppointment) {
-    //       return res.send({ success: false, appointment: existAppointment });
-    //     }
-    
-    //     const appointmentResult = await appoinmentCollection.insertOne(appointment);
-    //     return res.send({ success: true, appointmentResult });
-    //   } catch (error) {
-    //     console.error("Error in /appointment endpoint:", error);
-    //     return res.status(500).send({ success: false, error: "Internal Server Error" });
-    //   }
-    // });
+   
 
     app.get("/availableservices", async (req, res) => {
       const date = req.query.date || "Dec 8, 2023";
@@ -119,20 +90,39 @@ async function run() {
           // bookde slot 
           const booked = BookedAppoinments.map(b=> b.slot);
           // bookde doctor 
-          const bookedDoctor = BookedDoctor.map(ad=> ad.name);
-          console.log(bookedDoctor)
+          // const bookedDoctor = BookedDoctor.map(ad=> ad.name);
+          // console.log(bookedDoctor)
           // availAbleService.booked=BookedAppoinments.map(s=> s.slot)
         
 
           const available= availAbleService.slots.filter(as=>!booked.includes(as))
           availAbleService.slots = available;
-          availAbleService.doctor_name=bookedDoctor;
+          // availAbleService.doctor_name=bookedDoctor;
 
           // const availableDoctor= availAbleService.doctor_name.map(bb=>!bookedDoctor.includes(bb))
           // availAbleService.doctor_name = availableDoctor;
         })
       res.send(availAbleServices);
     });
+
+
+
+
+    app.get("/booking-appoinment", async(req, res) =>{
+      const patients_email = req.query.patients_email;
+      const patients_email_query = {patients_email : patients_email};
+      const patients_appoinment = await appoinmentCollection.find(patients_email_query).toArray();
+      res.send(patients_appoinment);
+    })
+
+
+    // app.get("/all-booking", async (req, res) => {
+    //   const patients_email = req.query.patients_email;
+    //   const query = {patients_email : patients_email};
+    //   const service = appoinmentCollection.find(query);
+    //   const services = await service.toArray();
+    //   res.send(services);
+    // });
 
     console.log("database conneted"); 
   } finally {
