@@ -38,7 +38,7 @@ async function run() {
 
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
-      const user = user.body;
+      const user = req.body;
       const filter = { email: email };
       const options = { upsert: true };
       const updateDoc = {
@@ -51,6 +51,9 @@ async function run() {
       );
       res.send(result);
     });
+    // {
+      
+    // }
 
     app.get("/service", async (req, res) => {
       const query = {};
