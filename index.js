@@ -35,6 +35,18 @@ async function run() {
     const usersCollection = client
       .db("trishal_medical_center")
       .collection("users");
+    const doctorsCollection = client
+      .db("trishal_medical_center")
+      .collection("doctors");
+
+
+app.post("/doctors",async(req,res)=>{
+
+  const newDoctors=req.body;
+  const saveDoctor=await doctorsCollection.insertOne(newDoctors);
+  res.send(saveDoctor)
+})
+
 
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
