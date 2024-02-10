@@ -73,6 +73,12 @@ app.post("/doctors",async(req,res)=>{
       const services = await service.toArray();
       res.send(services);
     });
+    app.get("/all-doctors", async (req, res) => {
+      const query = {};
+      const doctors = doctorsCollection.find(query);
+      const allDoctors = await doctors.toArray();
+      res.send(allDoctors);
+    });
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
