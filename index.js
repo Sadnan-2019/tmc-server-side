@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
-
+const ObjectId = require("mongodb").ObjectId;
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -39,14 +39,16 @@ async function run() {
       .db("trishal_medical_center")
       .collection("doctors");
 
+    app.post("/doctors", async (req, res) => {
+      const newDoctors = req.body;
+      const saveDoctor = await doctorsCollection.insertOne(newDoctors);
+      res.send(saveDoctor);
+    });
 
-app.post("/doctors",async(req,res)=>{
-
-  const newDoctors=req.body;
-  const saveDoctor=await doctorsCollection.insertOne(newDoctors);
-  res.send(saveDoctor)
-})
-
+    app.delete("/doctor/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+    });
 
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -64,7 +66,7 @@ app.post("/doctors",async(req,res)=>{
       res.send(result);
     });
     // {
-      
+
     // }
 
     app.get("/service", async (req, res) => {
