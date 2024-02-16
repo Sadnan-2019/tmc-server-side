@@ -48,6 +48,8 @@ async function run() {
     app.delete("/doctor/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
+      const deleteDoctor = await doctorsCollection.deleteOne(query);
+      res.send(deleteDoctor);
     });
 
     app.put("/users/:email", async (req, res) => {
