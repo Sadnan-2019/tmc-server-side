@@ -38,12 +38,47 @@ async function run() {
     const doctorsCollection = client
       .db("trishal_medical_center")
       .collection("doctors");
+    const departmentCollection = client
+      .db("trishal_medical_center")
+      .collection("department");
 
     app.post("/doctors", async (req, res) => {
       const newDoctors = req.body;
       const saveDoctor = await doctorsCollection.insertOne(newDoctors);
       res.send(saveDoctor);
     });
+    app.post("/department",upload.single('file'), async(req,res)=>{
+      const newDept= req.body;
+      const file = req.file.path; 
+      const saveDept= await departmentCollection.insertOne(newDept,file);
+      res.send(saveDept);
+
+    })
+
+///////// file submit 
+// app.post('/api/submitForm', upload.single('file'), async (req, res) => {
+  // try {
+  //   const { textData } = req.body;
+    // const file = req.file.path; // Multer adds a 'file' property to req with file details
+
+    // Create new document in MongoDB
+    // const formData = new departmentCollection({ textData, file });
+    // await formData.save();
+
+//     res.status(200).json({ message: 'Form submitted successfully' });
+//   } catch (error) {
+//     console.error('Error submitting form:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+
+///////
+
+
+
+
+
+
 
     app.delete("/doctor/:id", async (req, res) => {
       const id = req.params.id;
