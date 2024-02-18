@@ -1,9 +1,11 @@
 const express = require("express");
+ 
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 const app = express();
+ 
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -47,11 +49,14 @@ async function run() {
       const saveDoctor = await doctorsCollection.insertOne(newDoctors);
       res.send(saveDoctor);
     });
-    app.post("/department",upload.single('file'), async(req,res)=>{
+    app.post("/department", async(req,res)=>{
+      const { textData } = req.body;
       const newDept= req.body;
-      const file = req.file.path; 
-      const saveDept= await departmentCollection.insertOne(newDept,file);
+      // const file = req.file.path; 
+      const saveDept= await departmentCollection.insertOne(newDept);
       res.send(saveDept);
+      // const { textData } = req.body;
+      // const file = req.file.path;
 
     })
 
