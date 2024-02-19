@@ -1,11 +1,11 @@
 const express = require("express");
- 
+const multer = require('multer');
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 const app = express();
- 
+const upload = multer({ dest: 'uploads/' });
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -49,36 +49,34 @@ async function run() {
       const saveDoctor = await doctorsCollection.insertOne(newDoctors);
       res.send(saveDoctor);
     });
-    app.post("/department", async(req,res)=>{
-      const { textData } = req.body;
-      const newDept= req.body;
-      // const file = req.file.path; 
-      const saveDept= await departmentCollection.insertOne(newDept);
-      res.send(saveDept);
-      // const { textData } = req.body;
-      // const file = req.file.path;
+    app.post("/department",upload.single('file'),  async(req,res)=>{
+      const { dept_name, description } = req.body;
+      const imageUrl = req.file.path;
+      
+      const saveDepartment = await departmentCollection.insertOne({ dept_name, description, imageUrl });
 
+      res.send(saveDepartment);
+     
+       
     })
+    // app.get("/all-department/:id", async (req, res) => {
+    //   const departmentId = req.params.id;
+    //   const department = await departmentCollection.findOne({ _id: new ObjectId(departmentId) });
+    //   if (!department || !department.imageUrl) {
+        
+    //     return res.status(404).json({ error: 'Image not found' });
+    // }
+       
+    //   res.send(department.imageUrl);
+    // });
 
-///////// file submit 
-// app.post('/api/submitForm', upload.single('file'), async (req, res) => {
-  // try {
-  //   const { textData } = req.body;
-    // const file = req.file.path; // Multer adds a 'file' property to req with file details
 
-    // Create new document in MongoDB
-    // const formData = new departmentCollection({ textData, file });
-    // await formData.save();
-
-//     res.status(200).json({ message: 'Form submitted successfully' });
-//   } catch (error) {
-//     console.error('Error submitting form:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
-
-///////
-
+    app.get("/all-department", async (req, res) => {
+      const query = {};
+      const department = departmentCollection.find(query);
+      const allDepartment = await department.toArray();
+      res.send(allDepartment);
+    });
 
 
 
@@ -123,6 +121,7 @@ async function run() {
       const allDoctors = await doctors.toArray();
       res.send(allDoctors);
     });
+   
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
