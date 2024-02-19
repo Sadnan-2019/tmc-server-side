@@ -1,11 +1,11 @@
 const express = require("express");
-const multer = require('multer');
+const multer = require("multer");
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -49,27 +49,41 @@ async function run() {
       const saveDoctor = await doctorsCollection.insertOne(newDoctors);
       res.send(saveDoctor);
     });
-    app.post("/department",upload.single('file'),  async(req,res)=>{
+
+    const storage = multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, "./public/data/uploads/");
+      },
+      filename: function (req, file, cb) {
+        // const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, file.originalname);
+      },
+    });
+
+    const upload = multer({ storage: storage });
+
+    app.post("/department", upload.single("file"), async (req, res) => {
       const { dept_name, description } = req.body;
       const imageUrl = req.file.path;
-      
-      const saveDepartment = await departmentCollection.insertOne({ dept_name, description, imageUrl });
+
+      const saveDepartment = await departmentCollection.insertOne({
+        dept_name,
+        description,
+        imageUrl,
+      });
 
       res.send(saveDepartment);
-     
-       
-    })
+    });
     // app.get("/all-department/:id", async (req, res) => {
     //   const departmentId = req.params.id;
     //   const department = await departmentCollection.findOne({ _id: new ObjectId(departmentId) });
     //   if (!department || !department.imageUrl) {
-        
+
     //     return res.status(404).json({ error: 'Image not found' });
     // }
-       
+
     //   res.send(department.imageUrl);
     // });
-
 
     app.get("/all-department", async (req, res) => {
       const query = {};
@@ -78,14 +92,9 @@ async function run() {
       res.send(allDepartment);
     });
 
-
-
-
-
-
     app.delete("/doctor/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const deleteDoctor = await doctorsCollection.deleteOne(query);
       res.send(deleteDoctor);
     });
@@ -121,7 +130,7 @@ async function run() {
       const allDoctors = await doctors.toArray();
       res.send(allDoctors);
     });
-   
+
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
