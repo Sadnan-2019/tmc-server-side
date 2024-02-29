@@ -52,20 +52,24 @@ async function run() {
 
     const storage = multer.diskStorage({
       destination: function (req, file, cb) {
-        cb(null, "Image");
+        cb(null, "image");
       },
       filename: function (req, file, cb) {
-        // const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, file.originalname);
+         cb(null, file.originalname);
       },
     });
 
     const upload = multer({ storage: storage });
 
+    
+    app.get("/images/:filename", function (req, res) {
+      var filename = req.params.filename;
+      res.sendFile(__dirname + "/image/" + filename);
+    });
     app.post("/department", upload.single("file"), async (req, res) => {
       const { dept_name, description } = req.body;
-      const imageUrl = req.file.path;
-
+      const imageUrl = `http://localhost:5000/images/${req.file.filename}`;
+      console.log(imageUrl)
       const saveDepartment = await departmentCollection.insertOne({
         dept_name,
         description,
