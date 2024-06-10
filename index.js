@@ -78,6 +78,30 @@ async function run() {
 
       res.send(saveDepartment);
     });
+
+
+
+    app.delete("/department/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const deleteDepartment = await departmentCollection.deleteOne(query);
+      res.send(deleteDepartment);
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // app.get("/all-department/:id", async (req, res) => {
     //   const departmentId = req.params.id;
     //   const department = await departmentCollection.findOne({ _id: new ObjectId(departmentId) });
