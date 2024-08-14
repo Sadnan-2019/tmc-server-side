@@ -44,11 +44,67 @@ async function run() {
       .db("trishal_medical_center")
       .collection("department");
 
-    app.post("/doctors", async (req, res) => {
-      const newDoctors = req.body;
-      const saveDoctor = await doctorsCollection.insertOne(newDoctors);
-      res.send(saveDoctor);
-    });
+    // app.post("/doctors", async (req, res) => {
+    //   const newDoctors = req.body;
+    //   const saveDoctor = await doctorsCollection.insertOne(newDoctors);
+    //   res.send(saveDoctor);
+    // });
+
+// /post doctor  
+
+
+const storageE = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "image");
+  },
+  filename: function (req, file, cb) {
+     cb(null, file.originalname);
+  },
+});
+
+
+const doctorsUpload = multer({ storageE: storageE });
+
+app.get("/imagess/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/image/" + filename);
+});
+
+app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
+  const { name, speciality } = req.body;
+  const imageUrl = `http://localhost:5000/imagess/${req.file.filename}`;
+  console.log(imageUrl)
+  const saveDoctors = await doctorsCollection.insertOne({
+    name,
+    speciality,
+    imageUrl,
+  });
+
+  res.send(saveDoctors);
+});
+
+
+
+
+////post doctor
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const storage = multer.diskStorage({
       destination: function (req, file, cb) {
