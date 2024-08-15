@@ -55,7 +55,7 @@ async function run() {
 
 const storageE = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "image");
+    cb(null, "Doctorimage");
   },
   filename: function (req, file, cb) {
      cb(null, file.originalname);
@@ -63,16 +63,16 @@ const storageE = multer.diskStorage({
 });
 
 
-const doctorsUpload = multer({ storageE: storageE });
+const doctorsUpload = multer({ storage: storageE });
 
-app.get("/imagess/:filename", function (req, res) {
+app.get("/imagesdoctor/:filename", function (req, res) {
   var filename = req.params.filename;
-  res.sendFile(__dirname + "/image/" + filename);
+  res.sendFile(__dirname + "/Doctorimage/" + filename);
 });
 
 app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
   const { name, speciality } = req.body;
-  const imageUrl = `http://localhost:5000/imagess/${req.file.filename}`;
+  const imageUrl = `http://localhost:5000/imagesdoctor/${req.file.filename}`;
   console.log(imageUrl)
   const saveDoctors = await doctorsCollection.insertOne({
     name,
