@@ -43,6 +43,9 @@ async function run() {
     const departmentCollection = client
       .db("trishal_medical_center")
       .collection("department");
+    const HealthPackageCollection = client
+      .db("trishal_medical_center")
+      .collection("healthpackagecollection");
 
     // app.post("/doctors", async (req, res) => {
     //   const newDoctors = req.body;
@@ -92,6 +95,72 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
 
 
 
+//delete doctor
+
+app.delete("/doctor/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const deleteDoctor = await doctorsCollection.deleteOne(query);
+  res.send(deleteDoctor);
+});
+//delete doctor
+
+
+//get all doctor
+app.get("/all-doctors", async (req, res) => {
+  const query = {};
+  const doctors = doctorsCollection.find(query);
+  const allDoctors = await doctors.toArray();
+  res.send(allDoctors);
+});
+//get all doctor
+
+
+
+//PostHealthPackage
+
+const HealthPackage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "HealthPackageImage");
+  },
+  filename: function (req, file, cb) {
+     cb(null, file.originalname);
+  },
+});
+
+
+const HealthPackageUpload = multer({ storage: HealthPackage });
+
+app.get("/imagespackage/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/HealthPackageImage/" + filename);
+});
+
+app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) => {
+  const { package_name, package_rate } = req.body;
+  const imageUrl = `http://localhost:5000/imagespackage/${req.file.filename}`;
+  console.log(imageUrl)
+  const saveHealthPackage= await HealthPackageCollection.insertOne({
+    package_name,
+    package_rate,
+    imageUrl,
+  });
+
+  res.send(saveHealthPackage);
+});
+
+//PostHealthPackage
+//get all package
+
+
+
+
+app.get("/all-health-package", async (req, res) => {
+  const query = {};
+  const healthpackage = HealthPackageCollection.find(query);
+  const allHealthPackage = await healthpackage.toArray();
+  res.send(allHealthPackage);
+});
 
 
 
@@ -103,8 +172,7 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
 
 
 
-
-
+//post department
 
     const storage = multer.diskStorage({
       destination: function (req, file, cb) {
@@ -134,9 +202,9 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
 
       res.send(saveDepartment);
     });
+//post department
 
-
-
+//delete department
     app.delete("/department/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -144,45 +212,18 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
       res.send(deleteDepartment);
     });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // app.get("/all-department/:id", async (req, res) => {
-    //   const departmentId = req.params.id;
-    //   const department = await departmentCollection.findOne({ _id: new ObjectId(departmentId) });
-    //   if (!department || !department.imageUrl) {
-
-    //     return res.status(404).json({ error: 'Image not found' });
-    // }
-
-    //   res.send(department.imageUrl);
-    // });
-
+      //get department
     app.get("/all-department", async (req, res) => {
       const query = {};
       const department = departmentCollection.find(query);
       const allDepartment = await department.toArray();
       res.send(allDepartment);
     });
+  //get department
+    
 
-    app.delete("/doctor/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const deleteDoctor = await doctorsCollection.deleteOne(query);
-      res.send(deleteDoctor);
-    });
 
+// put user 
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -201,20 +242,15 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
     // {
 
     // }
-
+//get service
     app.get("/service", async (req, res) => {
       const query = {};
       const service = serviceCollection.find(query);
       const services = await service.toArray();
       res.send(services);
     });
-    app.get("/all-doctors", async (req, res) => {
-      const query = {};
-      const doctors = doctorsCollection.find(query);
-      const allDoctors = await doctors.toArray();
-      res.send(allDoctors);
-    });
-
+ 
+//post appoinment
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
@@ -238,7 +274,7 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
       const appoinmentResult = await appoinmentCollection.insertOne(appoinment);
       return res.send({ success: true, appoinmentResult });
     });
-
+//get all service
     app.get("/availableservices", async (req, res) => {
       const date = req.query.date || "Dec 8, 2023";
       //1 fisrt step get all services
