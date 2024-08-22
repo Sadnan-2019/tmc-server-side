@@ -46,6 +46,9 @@ async function run() {
     const HealthPackageCollection = client
       .db("trishal_medical_center")
       .collection("healthpackagecollection");
+    const ReviewCollection = client
+      .db("trishal_medical_center")
+      .collection("reviewcollection");
 
     // app.post("/doctors", async (req, res) => {
     //   const newDoctors = req.body;
@@ -163,9 +166,17 @@ app.get("/all-health-package", async (req, res) => {
 });
 
 
+//get all package
 
+//delete package
 
-
+app.delete("/package/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const deletePacage = await HealthPackageCollection.deleteOne(query);
+  res.send(deletePacage);
+});
+//delete package
 
 
 
@@ -211,6 +222,7 @@ app.get("/all-health-package", async (req, res) => {
       const deleteDepartment = await departmentCollection.deleteOne(query);
       res.send(deleteDepartment);
     });
+    //delete pepartment
 
       //get department
     app.get("/all-department", async (req, res) => {
@@ -239,6 +251,8 @@ app.get("/all-health-package", async (req, res) => {
       );
       res.send(result);
     });
+
+    //put user
     // {
 
     // }
@@ -249,7 +263,7 @@ app.get("/all-health-package", async (req, res) => {
       const services = await service.toArray();
       res.send(services);
     });
- 
+ //get service
 //post appoinment
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
@@ -274,6 +288,8 @@ app.get("/all-health-package", async (req, res) => {
       const appoinmentResult = await appoinmentCollection.insertOne(appoinment);
       return res.send({ success: true, appoinmentResult });
     });
+
+    //post appoinment
 //get all service
     app.get("/availableservices", async (req, res) => {
       const date = req.query.date || "Dec 8, 2023";
@@ -327,13 +343,56 @@ app.get("/all-health-package", async (req, res) => {
       res.send(patients_appoinment);
     });
 
-    // app.get("/all-booking", async (req, res) => {
-    //   const patients_email = req.query.patients_email;
-    //   const query = {patients_email : patients_email};
-    //   const service = appoinmentCollection.find(query);
-    //   const services = await service.toArray();
-    //   res.send(services);
-    // });
+    
+
+/// post review 
+
+const ReviewImage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "ReviewerImage");
+  },
+  filename: function (req, file, cb) {
+     cb(null, file.originalname);
+  },
+});
+
+
+const ReviewUpload = multer({ storage: ReviewImage });
+
+app.get("/imagesreview/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/ReviewerImage/" + filename);
+});
+
+app.post("/review", ReviewUpload.single("file"), async (req, res) => {
+  const { reviewer_name, review_details } = req.body;
+  const imageUrl = `http://localhost:5000/imagesreview/${req.file.filename}`;
+  console.log(imageUrl)
+  const saveReview= await ReviewCollection.insertOne({
+    reviewer_name,
+    review_details,
+    imageUrl,
+  });
+
+  res.send(saveReview);
+});
+
+
+
+
+
+//post review
+
+
+
+
+
+
+
+
+
+
+
 
     console.log("database conneted");
   } finally {
