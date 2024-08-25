@@ -378,10 +378,28 @@ app.post("/review", ReviewUpload.single("file"), async (req, res) => {
 });
 
 
+//get all-review
 
 
+app.get("/all-review", async (req, res) => {
+  const query = {};
+  const review = ReviewCollection.find(query);
+  const reviews = await review.toArray();
+  res.send(reviews);
+});
+ 
 
-//post review
+
+//delete review
+app.delete("/delete-review/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const deleteReview = await ReviewCollection.deleteOne(query);
+  res.send(deleteReview);
+});
+
+
+// review
 
 
 
