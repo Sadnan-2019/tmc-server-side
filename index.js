@@ -7,7 +7,8 @@ const ObjectId = require("mongodb").ObjectId;
 const app = express();
 // const upload = multer({ dest: 'uploads/' });
 const port = process.env.PORT || 5000;
-
+const path = require("path");
+const fs = require("fs"); 
 app.use(cors());
 app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority`;
@@ -95,6 +96,57 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
 ////post doctor
 
 
+//update doctor
+
+const upadteDoctors = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "Doctorimage");
+  },
+  filename: function (req, file, cb) {
+     cb(null, file.originalname);
+  },
+});
+
+
+const UpdatedoctorsUpload = multer({ storage: upadteDoctors });
+
+app.get("/update-imagesdoctor/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(path.join(__dirname + "/Doctorimage/" + filename));
+});
+
+app.patch("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req, res) => {
+  const doctorId = req.params.id;
+  // const doctor = await doctorsCollection.findById(doctorId);
+  const doctor = await doctorsCollection.findOne({ _id: new ObjectId(doctorId) });
+  const { name, speciality } = req.body;
+  const imageUrl = `http://localhost:5000/update-imagesdoctor/${req.file.filename}`;
+  console.log(imageUrl)
+  const UpdateSaveDoctors = await doctorsCollection.insertOne({
+    name,
+    speciality,
+    imageUrl,
+  });
+  if (req.file) {
+    // Remove the old image from the server (optional but recommended)
+    if (doctor.imageUrl) {
+      const oldImagePath = path.join(__dirname, "../Doctorimage", doctor.imageUrl);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath); // Delete the old image
+      }
+    }
+
+    // Save the new image path
+    doctor.imageUrl = req.file.filename;
+  }
+
+  res.send(UpdateSaveDoctors);
+});
+
+
+
+///update doctor
+
 
 
 
@@ -153,6 +205,9 @@ app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) 
 });
 
 //PostHealthPackage
+
+
+
 //get all package
 
 
