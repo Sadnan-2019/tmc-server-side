@@ -127,18 +127,7 @@ app.patch("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req,
     speciality,
     imageUrl,
   });
-  if (req.file) {
-    // Remove the old image from the server (optional but recommended)
-    if (doctor.imageUrl) {
-      const oldImagePath = path.join(__dirname, "../Doctorimage", doctor.imageUrl);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath); // Delete the old image
-      }
-    }
-
-    // Save the new image path
-    doctor.imageUrl = req.file.filename;
-  }
+  
 
   res.send(UpdateSaveDoctors);
 });
