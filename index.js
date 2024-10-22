@@ -125,7 +125,7 @@ app.patch("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req,
   const { name, speciality } = req.body;
   const imageUrl = `http://localhost:5000/update-imagesdoctor/${req.file.filename}`;
   console.log(imageUrl)
-  const UpdateSaveDoctors = await doctorsCollection.insertOne({
+  const UpdateSaveDoctors = await doctorsCollection.updateOne({
     name,
     speciality,
     imageUrl,
