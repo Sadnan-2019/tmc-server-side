@@ -118,7 +118,8 @@ app.get("/update-imagesdoctor/:filename", function (req, res) {
 app.patch("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req, res) => {
   const doctorId = req.params.id;
   // const doctor = await doctorsCollection.findById(doctorId);
-  const doctor = await doctorsCollection.findOne({ _id: new ObjectId(doctorId) });
+  const doctor =  ({ _id: new ObjectId(doctorId) });
+  const options= {upsert:true};
   // if (!doctor) {
   //   return res.status(404).json({ message: "Doctor not found" });
   // }
@@ -143,7 +144,7 @@ app.patch("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req,
     doctor.imageUrl = req.file.filename;
   }
 
-  res.send(UpdateSaveDoctors);
+  res.send(doctor,UpdateSaveDoctors,options);
 });
 
 
