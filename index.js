@@ -115,38 +115,60 @@ app.get("/update-imagesdoctor/:filename", function (req, res) {
   res.sendFile(path.join(__dirname + "/Doctorimage/" + filename));
 });
 
-app.patch("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req, res) => {
-  const doctorId = req.params.id;
-  // const doctor = await doctorsCollection.findById(doctorId);
-  const doctor =  ({ _id: new ObjectId(doctorId) });
-  const options= {upsert:true};
-  // if (!doctor) {
-  //   return res.status(404).json({ message: "Doctor not found" });
-  // }
-  const { name, speciality } = req.body;
-  const imageUrl = `http://localhost:5000/update-imagesdoctor/${req.file.filename}`;
-  console.log(imageUrl)
-  const UpdateSaveDoctors = await doctorsCollection.updateOne({
-    name,
-    speciality,
-    imageUrl,
-  });
-  if (req.file) {
-    // Remove the old image from the server (optional but recommended)
-    if (doctor.imageUrl) {
+ 
+
+// const { ObjectId } = require("mongodb");
+// const fs = require("fs");
+// const path = require("path");
+
+app.put("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req, res) => {
+  try {
+    const doctorId = req.params.id;
+    const { name, speciality } = req.body;
+    const imageUrl = `http://localhost:5000/update-imagesdoctor/${req.file?.filename}`;
+
+    // Find the doctor to check for existing image (if needed)
+    const doctor = await doctorsCollection.findOne({ _id: new ObjectId(doctorId) });
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    // Delete the old image from the server (optional but recommended)
+    if (doctor.imageUrl && req.file) {
       const oldImagePath = path.join(__dirname, "Doctorimage", doctor.imageUrl);
       if (fs.existsSync(oldImagePath)) {
         fs.unlinkSync(oldImagePath); // Delete the old image
       }
     }
 
-    // Save the new image path
-    doctor.imageUrl = req.file.filename;
+    // Prepare the update document
+    const updateData = {
+      name,
+      speciality,
+    };
+    if (req.file) {
+      updateData.imageUrl = req.file.filename;
+    }
+
+    // Update the doctor's information in the database
+    const result = await doctorsCollection.updateOne(
+      { _id: new ObjectId(doctorId) }, // Filter
+      { $set: updateData }, // Update document
+      { upsert: true } // Options
+      
+    );
+
+    // Return the updated doctor info
+    const updatedDoctor = await doctorsCollection.findOne({ _id: new ObjectId(doctorId) });
+    res.json({
+      message: "Doctor updated successfully",
+      doctor: updatedDoctor,result,imageUrl
+    });
+  } catch (error) {
+    console.error("Error updating doctor:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  res.send(doctor,UpdateSaveDoctors,options);
 });
-
 
 
 ///update doctor
