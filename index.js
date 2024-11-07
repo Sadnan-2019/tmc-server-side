@@ -50,6 +50,9 @@ async function run() {
     const ReviewCollection = client
       .db("trishal_medical_center")
       .collection("reviewcollection");
+    const FacilityCollection = client
+      .db("trishal_medical_center")
+      .collection("facilitycollection");
 
     // app.post("/doctors", async (req, res) => {
     //   const newDoctors = req.body;
@@ -482,8 +485,36 @@ app.delete("/delete-review/:id", async (req, res) => {
 
 // review
 
+// facility 
+app.post("/facility",  async (req, res) => {
+  const { facility_name, facility_description } = req.body;
+  // const imageUrl = `http://localhost:5000/imagesreview/${req.file.filename}`;
+  // console.log(imageUrl)
+  const saveFacility= await FacilityCollection.insertOne({
+    facility_name,
+    facility_description,
+    // imageUrl,
+  });
+res.send(saveFacility);
+  console.log(saveFacility)
+});
 
 
+app.get("/all-failities", async (req, res) => {
+  const query = {};
+  const facility = FacilityCollection.find(query);
+  const facilitys = await facility.toArray();
+  res.send(facilitys);
+  //
+});
+
+
+app.delete("/delete-facility/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const deleteFacility = await FacilityCollection.deleteOne(query);
+  res.send(deleteFacility);
+});
 
 
 
