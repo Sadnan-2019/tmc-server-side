@@ -518,6 +518,25 @@ app.delete("/delete-facility/:id", async (req, res) => {
 
 
 
+app.put('/update-facility/:id', async (req, res) => {
+  const { id } = req.params;
+  const { facility_name, facility_description } = req.body;
+
+  try {
+    const updatedBook = await FacilityCollection.findByIdAndUpdate(
+      id,
+      { facility_name, facility_description },
+      { new: true }
+    );
+
+    res.json(updatedBook);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update the book' });
+  }
+});
+
+
+
 
 
 
