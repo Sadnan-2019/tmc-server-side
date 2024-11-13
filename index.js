@@ -521,13 +521,33 @@ app.delete("/delete-facility/:id", async (req, res) => {
 app.put('/update-facility/:id', async (req, res) => {
   const { id } = req.params;
   const { facility_name, facility_description } = req.body;
+  if (!facility_name || !facility_description) {
+    return res.status(400).json({ error: 'Both facility_name and facility_description are required' });
+  }
+
+  // console.log("ID:", id);
+  // console.log("Request Body:", req.body);
 
   try {
+// Check if ID is valid before proceeding
+if (!id || !facility_name || !facility_description) {
+  return res.status(400).json({ error: 'Missing required fields' });
+}
+
+
+
     const updatedBook = await FacilityCollection.findByIdAndUpdate(
       id,
+      // console.log( id),
+      // console.log("Request Body:", req.body);
       { facility_name, facility_description },
       { new: true }
+  
+      
     );
+    if (!updatedBook) {
+      return res.status(404).json({ error: 'Facility not found' });
+    }
 
     res.json(updatedBook);
   } catch (error) {
