@@ -525,8 +525,7 @@ app.put('/update-facility/:id', async (req, res) => {
     return res.status(400).json({ error: 'Both facility_name and facility_description are required' });
   }
 
-  // console.log("ID:", id);
-  // console.log("Request Body:", req.body);
+ 
 
   try {
 // Check if ID is valid before proceeding
