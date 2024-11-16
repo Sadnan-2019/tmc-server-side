@@ -534,23 +534,23 @@ if (!id || !facility_name || !facility_description) {
   return res.status(400).json({ error: 'Missing required fields' });
 }
 
-
-
-    const updatedBook = await FacilityCollection.findByIdAndUpdate(
-      id,
-      // console.log( id),
-      // console.log("Request Body:", req.body);
-      { facility_name, facility_description },
-      { new: true }
-  
-      
-    );
-    if (!updatedBook) {
+const filter = { _id: new ObjectId(req.params.id) };
+const updateData = {
+  $set: {
+    facility_name: req.body.facility_name,
+    facility_description: req.body.facility_description
+  }
+};
+const result = await FacilityCollection.updateOne(filter, updateData);
+// console.log( req.body)
+   
+    if (!result) {
       return res.status(404).json({ error: 'Facility not found' });
     }
 
-    res.json(updatedBook);
+    res.json(result);
   } catch (error) {
+    // console.log("error",error)
     res.status(500).json({ error: 'Failed to update the book' });
   }
 });
