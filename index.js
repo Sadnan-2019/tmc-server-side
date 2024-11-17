@@ -125,6 +125,7 @@ app.get("/update-imagesdoctor/:filename", function (req, res) {
 // const path = require("path");
 
 app.put("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req, res) => {
+  
   try {
     const doctorId = req.params.id;
     const { name, speciality } = req.body;
@@ -171,6 +172,7 @@ app.put("/update-doctors/:id", UpdatedoctorsUpload.single("file"), async (req, r
     console.error("Error updating doctor:", error);
     res.status(500).json({ message: "Internal server error" });
   }
+
 });
 
 
@@ -521,11 +523,11 @@ app.delete("/delete-facility/:id", async (req, res) => {
 app.put('/update-facility/:id', async (req, res) => {
   const { id } = req.params;
   const { facility_name, facility_description } = req.body;
+
   if (!facility_name || !facility_description) {
     return res.status(400).json({ error: 'Both facility_name and facility_description are required' });
   }
 
- 
 
   try {
 // Check if ID is valid before proceeding
@@ -548,7 +550,8 @@ const result = await FacilityCollection.updateOne(filter, updateData);
     }
 
     res.json(result);
-  } catch (error) {
+  } 
+  catch (error) {
     // console.log("error",error)
     res.status(500).json({ error: 'Failed to update the book' });
   }
