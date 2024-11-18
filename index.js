@@ -488,14 +488,35 @@ app.delete("/delete-review/:id", async (req, res) => {
 // review
 
 // facility 
-app.post("/facility",  async (req, res) => {
+
+const FacilityImage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "FacilityImage");
+  },
+  filename: function (req, file, cb) {
+     cb(null, file.originalname);
+  },
+});
+
+
+const FacilityUpload = multer({ storage: FacilityImage });
+
+app.get("/imagesfacility/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/FacilityImage/" + filename);
+});
+
+
+ 
+
+app.post("/facility",FacilityUpload.single("file"),  async (req, res) => {
   const { facility_name, facility_description } = req.body;
-  // const imageUrl = `http://localhost:5000/imagesreview/${req.file.filename}`;
+  const imageUrl = `http://localhost:5000/imagesfacility/${req.file.filename}`;
   // console.log(imageUrl)
   const saveFacility= await FacilityCollection.insertOne({
     facility_name,
     facility_description,
-    // imageUrl,
+    imageUrl,
   });
 res.send(saveFacility);
   console.log(saveFacility)
