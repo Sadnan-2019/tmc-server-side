@@ -566,8 +566,9 @@ app.get("/update-imagesfaicility/:filename", function (req, res) {
 
 app.put('/update-facility/:id',UpdateFacilityUpload.single("file"), async (req, res) => {
   const { id } = req.params;
+  const filter = { _id: new ObjectId(req.params.id) };
   const { facility_name, facility_description } = req.body;
-  const imageUrl = `http://localhost:5000/update-imagesfaicility/${req.file?.filename}`;
+  const imageUrl =   `http://localhost:5000/update-imagesfaicility/${req.file?.filename}`;
 
   if (!facility_name || !facility_description) {
     return res.status(400).json({ error: 'Both facility_name and facility_description are required' });
@@ -580,16 +581,17 @@ if (!id || !facility_name || !facility_description) {
   return res.status(400).json({ error: 'Missing required fields' });
 }
 
-const filter = { _id: new ObjectId(req.params.id) };
+// const filter = { _id: new ObjectId(req.params.id) };
 const updateData = {
   $set: {
     facility_name: req.body.facility_name,
     facility_description: req.body.facility_description,
-    imageUrl:req.body.imageUrl
+    // imageUrl:req.body.imageUrl
+    ...(imageUrl && { imageUrl }),
   }
 };
 const result = await FacilityCollection.updateOne(filter, updateData);
-// console.log( req.body)
+console.log( req.body)
    
     if (!result) {
       return res.status(404).json({ error: 'Facility not found' });
