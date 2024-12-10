@@ -286,6 +286,25 @@ async function run() {
       res.send(allDepartment);
     });
     //get department
+// update department 
+
+
+
+
+
+
+
+
+
+// update department
+
+
+
+
+
+
+
+
 
     // put user
     app.put("/users/:email", async (req, res) => {
