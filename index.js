@@ -289,7 +289,62 @@ async function run() {
 // update department 
 
 
+const upadteDepartment = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "image");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
 
+const UpdateDepartmentsUpload = multer({ storage: upadteDepartment });
+
+app.get("/update-imagesdepartment/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(path.join(__dirname + "/image/" + filename));
+});
+
+app.put(
+  "/update-department/:id",
+  UpdateDepartmentsUpload.single("file"),
+  async (req, res) => {
+    const { id } = req.params;
+    const filter = { _id: new ObjectId(req.params.id) };
+    const { dept_name, description } = req.body;
+
+      const imageUrl = `http://localhost:5000/update-imagesdepartment/${req.file?.filename}`;
+    try {
+
+      let updateData;
+      if (req.file?.filename) {
+        updateData = {
+          $set: { ...req.body, imageUrl },
+        };
+      } else {
+        updateData = {
+          $set: req.body,
+        };
+      }
+      const result = await departmentCollection.updateOne(filter, updateData);
+      console.log(req.body);
+      if (!result) {
+        return res.status(404).json({ error: "Department not found" });
+      }
+
+      res.json(result);
+    
+
+      
+
+       
+      
+    } catch (error) {
+      console.error("Error updating doctor:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
 
 
 
