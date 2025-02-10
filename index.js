@@ -172,12 +172,22 @@ async function run() {
     //delete doctor
 
     //get all doctor
+    // app.get("/all-doctors", async (req, res) => {
+    //   const query = {};
+    //   const doctors = doctorsCollection.find(query);
+    //   const allDoctors = await doctors.toArray();
+    //   res.send(allDoctors);
+    // });
     app.get("/all-doctors", async (req, res) => {
-      const query = {};
-      const doctors = doctorsCollection.find(query);
-      const allDoctors = await doctors.toArray();
-      res.send(allDoctors);
-    });
+      try {
+          const allDoctors = await doctorsCollection.find({}).toArray();
+          res.send(allDoctors);
+      } catch (error) {
+          res.status(500).send({ message: "Failed to fetch doctors", error: error.message });
+      }
+  });
+
+
     //get all doctor
 
     //PostHealthPackage
