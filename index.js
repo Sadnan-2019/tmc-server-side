@@ -10,10 +10,8 @@ const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority`;
-// "mongodb+srv://trishal_medical_center:<password>@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority"
-// const uri =
-//   `mongodb+srv://${username}:${password}@${cluster}/?authSource=${authSource}&authMechanism=${authMechanism}`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+//  mongodb+srv://trishal_medical_center:<db_password>@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 
 console.log(uri);
 
@@ -56,147 +54,128 @@ async function run() {
     //   res.send(saveDoctor);
     // });
 
-// /post doctor  
+    // /post doctor
 
+    const storageE = multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, "Doctorimage");
+      },
+      filename: function (req, file, cb) {
+        cb(null, file.originalname);
+      },
+    });
 
-const storageE = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "Doctorimage");
-  },
-  filename: function (req, file, cb) {
-     cb(null, file.originalname);
-  },
-});
+    const doctorsUpload = multer({ storage: storageE });
 
+    app.get("/imagesdoctor/:filename", function (req, res) {
+      var filename = req.params.filename;
+      res.sendFile(__dirname + "/Doctorimage/" + filename);
+    });
 
-const doctorsUpload = multer({ storage: storageE });
+    app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
+      const { name, speciality } = req.body;
+      const imageUrl = `http://localhost:5000/imagesdoctor/${req.file.filename}`;
+      console.log(imageUrl);
+      const saveDoctors = await doctorsCollection.insertOne({
+        name,
+        speciality,
+        imageUrl,
+      });
 
-app.get("/imagesdoctor/:filename", function (req, res) {
-  var filename = req.params.filename;
-  res.sendFile(__dirname + "/Doctorimage/" + filename);
-});
+      res.send(saveDoctors);
+    });
 
-app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
-  const { name, speciality } = req.body;
-  const imageUrl = `http://localhost:5000/imagesdoctor/${req.file.filename}`;
-  console.log(imageUrl)
-  const saveDoctors = await doctorsCollection.insertOne({
-    name,
-    speciality,
-    imageUrl,
-  });
+    ////post doctor
 
-  res.send(saveDoctors);
-});
+    //delete doctor
 
+    app.delete("/doctor/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const deleteDoctor = await doctorsCollection.deleteOne(query);
+      res.send(deleteDoctor);
+    });
+    //delete doctor
 
+    //get all doctor
+    app.get("/all-doctors", async (req, res) => {
+      const query = {};
+      const doctors = doctorsCollection.find(query);
+      const allDoctors = await doctors.toArray();
+      res.send(allDoctors);
+    });
+    //get all doctor
 
+    //PostHealthPackage
 
-////post doctor
+    const HealthPackage = multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, "HealthPackageImage");
+      },
+      filename: function (req, file, cb) {
+        cb(null, file.originalname);
+      },
+    });
 
+    const HealthPackageUpload = multer({ storage: HealthPackage });
 
+    app.get("/imagespackage/:filename", function (req, res) {
+      var filename = req.params.filename;
+      res.sendFile(__dirname + "/HealthPackageImage/" + filename);
+    });
 
+    app.post(
+      "/healthpackage",
+      HealthPackageUpload.single("file"),
+      async (req, res) => {
+        const { package_name, package_rate } = req.body;
+        const imageUrl = `http://localhost:5000/imagespackage/${req.file.filename}`;
+        console.log(imageUrl);
+        const saveHealthPackage = await HealthPackageCollection.insertOne({
+          package_name,
+          package_rate,
+          imageUrl,
+        });
 
+        res.send(saveHealthPackage);
+      }
+    );
 
-//delete doctor
+    //PostHealthPackage
+    //get all package
 
-app.delete("/doctor/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) };
-  const deleteDoctor = await doctorsCollection.deleteOne(query);
-  res.send(deleteDoctor);
-});
-//delete doctor
+    app.get("/all-health-package", async (req, res) => {
+      const query = {};
+      const healthpackage = HealthPackageCollection.find(query);
+      const allHealthPackage = await healthpackage.toArray();
+      res.send(allHealthPackage);
+    });
 
+    //get all package
 
-//get all doctor
-app.get("/all-doctors", async (req, res) => {
-  const query = {};
-  const doctors = doctorsCollection.find(query);
-  const allDoctors = await doctors.toArray();
-  res.send(allDoctors);
-});
-//get all doctor
+    //delete package
 
+    app.delete("/package/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const deletePacage = await HealthPackageCollection.deleteOne(query);
+      res.send(deletePacage);
+    });
+    //delete package
 
-
-//PostHealthPackage
-
-const HealthPackage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "HealthPackageImage");
-  },
-  filename: function (req, file, cb) {
-     cb(null, file.originalname);
-  },
-});
-
-
-const HealthPackageUpload = multer({ storage: HealthPackage });
-
-app.get("/imagespackage/:filename", function (req, res) {
-  var filename = req.params.filename;
-  res.sendFile(__dirname + "/HealthPackageImage/" + filename);
-});
-
-app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) => {
-  const { package_name, package_rate } = req.body;
-  const imageUrl = `http://localhost:5000/imagespackage/${req.file.filename}`;
-  console.log(imageUrl)
-  const saveHealthPackage= await HealthPackageCollection.insertOne({
-    package_name,
-    package_rate,
-    imageUrl,
-  });
-
-  res.send(saveHealthPackage);
-});
-
-//PostHealthPackage
-//get all package
-
-
-
-
-app.get("/all-health-package", async (req, res) => {
-  const query = {};
-  const healthpackage = HealthPackageCollection.find(query);
-  const allHealthPackage = await healthpackage.toArray();
-  res.send(allHealthPackage);
-});
-
-
-//get all package
-
-//delete package
-
-app.delete("/package/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) };
-  const deletePacage = await HealthPackageCollection.deleteOne(query);
-  res.send(deletePacage);
-});
-//delete package
-
-
-
-
-
-
-//post department
+    //post department
 
     const storage = multer.diskStorage({
       destination: function (req, file, cb) {
         cb(null, "image");
       },
       filename: function (req, file, cb) {
-         cb(null, file.originalname);
+        cb(null, file.originalname);
       },
     });
 
     const upload = multer({ storage: storage });
 
-    
     app.get("/images/:filename", function (req, res) {
       var filename = req.params.filename;
       res.sendFile(__dirname + "/image/" + filename);
@@ -204,7 +183,7 @@ app.delete("/package/:id", async (req, res) => {
     app.post("/department", upload.single("file"), async (req, res) => {
       const { dept_name, description } = req.body;
       const imageUrl = `http://localhost:5000/images/${req.file.filename}`;
-      console.log(imageUrl)
+      console.log(imageUrl);
       const saveDepartment = await departmentCollection.insertOne({
         dept_name,
         description,
@@ -213,9 +192,9 @@ app.delete("/package/:id", async (req, res) => {
 
       res.send(saveDepartment);
     });
-//post department
+    //post department
 
-//delete department
+    //delete department
     app.delete("/department/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -224,18 +203,16 @@ app.delete("/package/:id", async (req, res) => {
     });
     //delete pepartment
 
-      //get department
+    //get department
     app.get("/all-department", async (req, res) => {
       const query = {};
       const department = departmentCollection.find(query);
       const allDepartment = await department.toArray();
       res.send(allDepartment);
     });
-  //get department
-    
+    //get department
 
-
-// put user 
+    // put user
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -256,15 +233,15 @@ app.delete("/package/:id", async (req, res) => {
     // {
 
     // }
-//get service
+    //get service
     app.get("/service", async (req, res) => {
       const query = {};
       const service = serviceCollection.find(query);
       const services = await service.toArray();
       res.send(services);
     });
- //get service
-//post appoinment
+    //get service
+    //post appoinment
     app.post("/appoinment", async (req, res) => {
       const appoinment = req.body;
       const checkAppionment = {
@@ -290,7 +267,7 @@ app.delete("/package/:id", async (req, res) => {
     });
 
     //post appoinment
-//get all service
+    //get all service
     app.get("/availableservices", async (req, res) => {
       const date = req.query.date || "Dec 8, 2023";
       //1 fisrt step get all services
@@ -343,74 +320,55 @@ app.delete("/package/:id", async (req, res) => {
       res.send(patients_appoinment);
     });
 
-    
+    /// post review
 
-/// post review 
+    const ReviewImage = multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, "ReviewerImage");
+      },
+      filename: function (req, file, cb) {
+        cb(null, file.originalname);
+      },
+    });
 
-const ReviewImage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "ReviewerImage");
-  },
-  filename: function (req, file, cb) {
-     cb(null, file.originalname);
-  },
-});
+    const ReviewUpload = multer({ storage: ReviewImage });
 
+    app.get("/imagesreview/:filename", function (req, res) {
+      var filename = req.params.filename;
+      res.sendFile(__dirname + "/ReviewerImage/" + filename);
+    });
 
-const ReviewUpload = multer({ storage: ReviewImage });
+    app.post("/review", ReviewUpload.single("file"), async (req, res) => {
+      const { reviewer_name, review_details } = req.body;
+      const imageUrl = `http://localhost:5000/imagesreview/${req.file.filename}`;
+      console.log(imageUrl);
+      const saveReview = await ReviewCollection.insertOne({
+        reviewer_name,
+        review_details,
+        imageUrl,
+      });
 
-app.get("/imagesreview/:filename", function (req, res) {
-  var filename = req.params.filename;
-  res.sendFile(__dirname + "/ReviewerImage/" + filename);
-});
+      res.send(saveReview);
+    });
 
-app.post("/review", ReviewUpload.single("file"), async (req, res) => {
-  const { reviewer_name, review_details } = req.body;
-  const imageUrl = `http://localhost:5000/imagesreview/${req.file.filename}`;
-  console.log(imageUrl)
-  const saveReview= await ReviewCollection.insertOne({
-    reviewer_name,
-    review_details,
-    imageUrl,
-  });
+    //get all-review
 
-  res.send(saveReview);
-});
+    app.get("/all-review", async (req, res) => {
+      const query = {};
+      const review = ReviewCollection.find(query);
+      const reviews = await review.toArray();
+      res.send(reviews);
+    });
 
+    //delete review
+    app.delete("/delete-review/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const deleteReview = await ReviewCollection.deleteOne(query);
+      res.send(deleteReview);
+    });
 
-//get all-review
-
-
-app.get("/all-review", async (req, res) => {
-  const query = {};
-  const review = ReviewCollection.find(query);
-  const reviews = await review.toArray();
-  res.send(reviews);
-});
- 
-
-
-//delete review
-app.delete("/delete-review/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) };
-  const deleteReview = await ReviewCollection.deleteOne(query);
-  res.send(deleteReview);
-});
-
-
-// review
-
-
-
-
-
-
-
-
-
-
-
+    // review
 
     console.log("database conneted");
   } finally {
