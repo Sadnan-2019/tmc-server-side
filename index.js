@@ -379,4 +379,10 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`TRISHAL MEDICAL CENTER listening on port ${port}`);
 });
+// api/hello.js
+
+module.exports = (req, res) => {
+  res.status(200).json({ message: 'Hello from Vercel API!' });
+};
+
  module.exports.handler = serverless(app);
