@@ -48,13 +48,7 @@ async function run() {
       .db("trishal_medical_center")
       .collection("reviewcollection");
 
-    // app.post("/doctors", async (req, res) => {
-    //   const newDoctors = req.body;
-    //   const saveDoctor = await doctorsCollection.insertOne(newDoctors);
-    //   res.send(saveDoctor);
-    // });
-
-    // /post doctor
+    
 
     const storageE = multer.diskStorage({
       destination: function (req, file, cb) {
