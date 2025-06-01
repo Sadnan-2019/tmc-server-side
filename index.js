@@ -1,4 +1,5 @@
 const express = require("express");
+const serverless = require('serverless-http');
 const multer = require("multer");
 const cors = require("cors");
 require("dotenv").config();
@@ -378,3 +379,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`TRISHAL MEDICAL CENTER listening on port ${port}`);
 });
+ module.exports.handler = serverless(app);
