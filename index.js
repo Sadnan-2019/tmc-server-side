@@ -6,384 +6,342 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 const app = express();
-// const upload = multer({ dest: 'uploads/' });
+
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-//  mongodb+srv://trishal_medical_center:<db_password>@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 
-console.log(uri);
+// MongoDB Connection Caching for Serverless (Prevents connection limits from exhausting)
+let cachedClient = null;
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-
-async function run() {
-  try {
-    await client.connect();
-    const serviceCollection = client
-      .db("trishal_medical_center")
-      .collection("services");
-    const appoinmentCollection = client
-      .db("trishal_medical_center")
-      .collection("appoinment");
-    const usersCollection = client
-      .db("trishal_medical_center")
-      .collection("users");
-    const doctorsCollection = client
-      .db("trishal_medical_center")
-      .collection("doctors");
-    const departmentCollection = client
-      .db("trishal_medical_center")
-      .collection("department");
-    const HealthPackageCollection = client
-      .db("trishal_medical_center")
-      .collection("healthpackagecollection");
-    const ReviewCollection = client
-      .db("trishal_medical_center")
-      .collection("reviewcollection");
-
-    
-
-    const storageE = multer.diskStorage({
-      destination: function (req, file, cb) {
-        cb(null, "Doctorimage");
-      },
-      filename: function (req, file, cb) {
-        cb(null, file.originalname);
-      },
-    });
-
-    const doctorsUpload = multer({ storage: storageE });
-
-    app.get("/imagesdoctor/:filename", function (req, res) {
-      var filename = req.params.filename;
-      res.sendFile(__dirname + "/Doctorimage/" + filename);
-    });
-
-    app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
-      const { name, speciality } = req.body;
-      const imageUrl = `http://localhost:5000/imagesdoctor/${req.file.filename}`;
-      console.log(imageUrl);
-      const saveDoctors = await doctorsCollection.insertOne({
-        name,
-        speciality,
-        imageUrl,
-      });
-
-      res.send(saveDoctors);
-    });
-
-    ////post doctor
-
-    //delete doctor
-
-    app.delete("/doctor/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const deleteDoctor = await doctorsCollection.deleteOne(query);
-      res.send(deleteDoctor);
-    });
-    //delete doctor
-
-    //get all doctor
-    app.get("/all-doctors", async (req, res) => {
-      const query = {};
-      const doctors = doctorsCollection.find(query);
-      const allDoctors = await doctors.toArray();
-      res.send(allDoctors);
-    });
-    //get all doctor
-
-    //PostHealthPackage
-
-    const HealthPackage = multer.diskStorage({
-      destination: function (req, file, cb) {
-        cb(null, "HealthPackageImage");
-      },
-      filename: function (req, file, cb) {
-        cb(null, file.originalname);
-      },
-    });
-
-    const HealthPackageUpload = multer({ storage: HealthPackage });
-
-    app.get("/imagespackage/:filename", function (req, res) {
-      var filename = req.params.filename;
-      res.sendFile(__dirname + "/HealthPackageImage/" + filename);
-    });
-
-    app.post(
-      "/healthpackage",
-      HealthPackageUpload.single("file"),
-      async (req, res) => {
-        const { package_name, package_rate } = req.body;
-        const imageUrl = `http://localhost:5000/imagespackage/${req.file.filename}`;
-        console.log(imageUrl);
-        const saveHealthPackage = await HealthPackageCollection.insertOne({
-          package_name,
-          package_rate,
-          imageUrl,
-        });
-
-        res.send(saveHealthPackage);
-      }
-    );
-
-    //PostHealthPackage
-    //get all package
-
-    app.get("/all-health-package", async (req, res) => {
-      const query = {};
-      const healthpackage = HealthPackageCollection.find(query);
-      const allHealthPackage = await healthpackage.toArray();
-      res.send(allHealthPackage);
-    });
-
-    //get all package
-
-    //delete package
-
-    app.delete("/package/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const deletePacage = await HealthPackageCollection.deleteOne(query);
-      res.send(deletePacage);
-    });
-    //delete package
-
-    //post department
-
-    const storage = multer.diskStorage({
-      destination: function (req, file, cb) {
-        cb(null, "image");
-      },
-      filename: function (req, file, cb) {
-        cb(null, file.originalname);
-      },
-    });
-
-    const upload = multer({ storage: storage });
-
-    app.get("/images/:filename", function (req, res) {
-      var filename = req.params.filename;
-      res.sendFile(__dirname + "/image/" + filename);
-    });
-    app.post("/department", upload.single("file"), async (req, res) => {
-      const { dept_name, description } = req.body;
-      const imageUrl = `http://localhost:5000/images/${req.file.filename}`;
-      console.log(imageUrl);
-      const saveDepartment = await departmentCollection.insertOne({
-        dept_name,
-        description,
-        imageUrl,
-      });
-
-      res.send(saveDepartment);
-    });
-    //post department
-
-    //delete department
-    app.delete("/department/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const deleteDepartment = await departmentCollection.deleteOne(query);
-      res.send(deleteDepartment);
-    });
-    //delete pepartment
-
-    //get department
-    app.get("/all-department", async (req, res) => {
-      const query = {};
-      const department = departmentCollection.find(query);
-      const allDepartment = await department.toArray();
-    console.log("Departments data:", allDepartment);
-      res.send(allDepartment);
-    });
-    //get department
-
-    // put user
-    app.put("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const user = req.body;
-      const filter = { email: email };
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: user,
-      };
-      const result = await usersCollection.updateOne(
-        filter,
-        updateDoc,
-        options
-      );
-      res.send(result);
-    });
-
-    //put user
-    // {
-
-    // }
-    //get service
-    app.get("/service", async (req, res) => {
-      const query = {};
-      const service = serviceCollection.find(query);
-      const services = await service.toArray();
-      res.send(services);
-    });
-    //get service
-    //post appoinment
-    app.post("/appoinment", async (req, res) => {
-      const appoinment = req.body;
-      const checkAppionment = {
-        treatmentId: appoinment.treatmentId,
-        department: appoinment.department,
-        name: appoinment.name,
-        date: appoinment.date,
-        patients_email: appoinment.patients_email,
-        patients_name: appoinment.patients_name,
-      };
-
-      console.log(checkAppionment);
-      const existAppoinment = await appoinmentCollection.findOne(
-        checkAppionment
-      );
-      console.log(existAppoinment);
-
-      if (existAppoinment) {
-        return res.send({ success: false, appoinment: existAppoinment });
-      }
-      const appoinmentResult = await appoinmentCollection.insertOne(appoinment);
-      return res.send({ success: true, appoinmentResult });
-    });
-
-    //post appoinment
-    //get all service
-    app.get("/availableservices", async (req, res) => {
-      const date = req.query.date || "Dec 8, 2023";
-      //1 fisrt step get all services
-      const availAbleServices = await serviceCollection.find().toArray();
-
-      //2 get the booking of the day
-      const BookingDate = { date: date };
-      const bookingAppoinments = await appoinmentCollection
-        .find(BookingDate)
-        .toArray();
-
-      ///3 FOR EACH SERVICS FIND BOOKING
-
-      availAbleServices.forEach((availAbleService) => {
-        const BookedAppoinments = bookingAppoinments.filter(
-          (bk) => bk.department === availAbleService.dept_name
-        );
-        // console.log(BookedAppoinments)
-
-        // bookde doctor
-        const BookedDoctor = bookingAppoinments.filter(
-          (db) => db.name === availAbleService.doctor_name
-        );
-        // console.log(BookedDoctor)
-        // bookde slot
-        const booked = BookedAppoinments.map((b) => b.slot);
-        // bookde doctor
-        // const bookedDoctor = BookedDoctor.map(ad=> ad.name);
-        // console.log(bookedDoctor)
-        // availAbleService.booked=BookedAppoinments.map(s=> s.slot)
-
-        const available = availAbleService.slots.filter(
-          (as) => !booked.includes(as)
-        );
-        availAbleService.slots = available;
-        // availAbleService.doctor_name=bookedDoctor;
-
-        // const availableDoctor= availAbleService.doctor_name.map(bb=>!bookedDoctor.includes(bb))
-        // availAbleService.doctor_name = availableDoctor;
-      });
-      res.send(availAbleServices);
-    });
-
-    app.get("/booking-appoinment", async (req, res) => {
-      const patients_email = req.query.patients_email;
-      const patients_email_query = { patients_email: patients_email };
-      const patients_appoinment = await appoinmentCollection
-        .find(patients_email_query)
-        .toArray();
-      res.send(patients_appoinment);
-    });
-
-    /// post review
-
-    const ReviewImage = multer.diskStorage({
-      destination: function (req, file, cb) {
-        cb(null, "ReviewerImage");
-      },
-      filename: function (req, file, cb) {
-        cb(null, file.originalname);
-      },
-    });
-
-    const ReviewUpload = multer({ storage: ReviewImage });
-
-    app.get("/imagesreview/:filename", function (req, res) {
-      var filename = req.params.filename;
-      res.sendFile(__dirname + "/ReviewerImage/" + filename);
-    });
-
-    app.post("/review", ReviewUpload.single("file"), async (req, res) => {
-      const { reviewer_name, review_details } = req.body;
-      const imageUrl = `http://localhost:5000/imagesreview/${req.file.filename}`;
-      console.log(imageUrl);
-      const saveReview = await ReviewCollection.insertOne({
-        reviewer_name,
-        review_details,
-        imageUrl,
-      });
-
-      res.send(saveReview);
-    });
-
-    //get all-review
-
-    app.get("/all-review", async (req, res) => {
-      const query = {};
-      const review = ReviewCollection.find(query);
-      const reviews = await review.toArray();
-      res.send(reviews);
-    });
-
-    //delete review
-    app.delete("/delete-review/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const deleteReview = await ReviewCollection.deleteOne(query);
-      res.send(deleteReview);
-    });
-
-    // review
-
-    console.log("database conneted");
-  } finally {
+async function connectDB() {
+  if (cachedClient) {
+    return cachedClient;
   }
+  const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+  });
+  await client.connect();
+  cachedClient = client;
+  console.log("Database connected successfully");
+  return client;
 }
 
-run().catch(console.dir);
+// Middleware to attach db client to req so your routes can use it easily
+app.use(async (req, res, next) => {
+  try {
+    req.client = await connectDB();
+    req.db = req.client.db("trishal_medical_center");
+    next();
+  } catch (error) {
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
+// --- MULTER & IMAGE STORAGE SETUP ---
+// Note: Vercel has a read-only file system. Local folders won't persist permanently, 
+// but this keeps your exact route logic working while you test.
+const storageE = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "Doctorimage");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+const doctorsUpload = multer({ storage: storageE });
+
+app.get("/imagesdoctor/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/Doctorimage/" + filename);
+});
+
+// --- ROUTES ---
 
 app.get("/", (req, res) => {
   res.send("Hello FROM TRISHAL MEDICAL CENTER World!");
 });
 
-app.listen(port, () => {
-  console.log(`TRISHAL MEDICAL CENTER listening on port ${port}`);
+// 1. Doctors
+app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
+  try {
+    const { name, speciality } = req.body;
+    const imageUrl = `http://localhost:5000/imagesdoctor/${req.file ? req.file.filename : ''}`;
+    const doctorsCollection = req.db.collection("doctors");
+    const saveDoctors = await doctorsCollection.insertOne({ name, speciality, imageUrl });
+    res.send(saveDoctors);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
 });
-// api/hello.js
 
-module.exports = (req, res) => {
-  res.status(200).json({ message: 'Hello from Vercel API!' });
-};
+app.delete("/doctor/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const deleteDoctor = await req.db.collection("doctors").deleteOne(query);
+    res.send(deleteDoctor);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
 
- module.exports.handler = serverless(app);
+app.get("/all-doctors", async (req, res) => {
+  try {
+    const doctors = await req.db.collection("doctors").find({}).toArray();
+    res.send(doctors);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// 2. Health Packages
+const HealthPackage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "HealthPackageImage");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+const HealthPackageUpload = multer({ storage: HealthPackage });
+
+app.get("/imagespackage/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/HealthPackageImage/" + filename);
+});
+
+app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) => {
+  try {
+    const { package_name, package_rate } = req.body;
+    const imageUrl = `http://localhost:5000/imagespackage/${req.file ? req.file.filename : ''}`;
+    const collection = req.db.collection("healthpackagecollection");
+    const saveHealthPackage = await collection.insertOne({ package_name, package_rate, imageUrl });
+    res.send(saveHealthPackage);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/all-health-package", async (req, res) => {
+  try {
+    const allHealthPackage = await req.db.collection("healthpackagecollection").find({}).toArray();
+    res.send(allHealthPackage);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.delete("/package/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const deletePackage = await req.db.collection("healthpackagecollection").deleteOne(query);
+    res.send(deletePackage);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// 3. Departments
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "image");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
+
+app.get("/images/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/image/" + filename);
+});
+
+app.post("/department", upload.single("file"), async (req, res) => {
+  try {
+    const { dept_name, description } = req.body;
+    const imageUrl = `http://localhost:5000/images/${req.file ? req.file.filename : ''}`;
+    const collection = req.db.collection("department");
+    const saveDepartment = await collection.insertOne({ dept_name, description, imageUrl });
+    res.send(saveDepartment);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.delete("/department/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const deleteDepartment = await req.db.collection("department").deleteOne(query);
+    res.send(deleteDepartment);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/all-department", async (req, res) => {
+  try {
+    const allDepartment = await req.db.collection("department").find({}).toArray();
+    res.send(allDepartment);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// 4. Users
+app.put("/users/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+    const user = req.body;
+    const filter = { email: email };
+    const options = { upsert: true };
+    const updateDoc = { $set: user };
+    const result = await req.db.collection("users").updateOne(filter, updateDoc, options);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// 5. Services & Appointments
+app.get("/service", async (req, res) => {
+  try {
+    const services = await req.db.collection("services").find({}).toArray();
+    res.send(services);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.post("/appoinment", async (req, res) => {
+  try {
+    const appoinment = req.body;
+    const appointmentCollection = req.db.collection("appoinment");
+    const checkAppionment = {
+      treatmentId: appoinment.treatmentId,
+      department: appoinment.department,
+      name: appoinment.name,
+      date: appoinment.date,
+      patients_email: appoinment.patients_email,
+      patients_name: appoinment.patients_name,
+    };
+
+    const existAppoinment = await appointmentCollection.findOne(checkAppionment);
+    if (existAppoinment) {
+      return res.send({ success: false, appoinment: existAppoinment });
+    }
+    const appoinmentResult = await appointmentCollection.insertOne(appoinment);
+    return res.send({ success: true, appoinmentResult });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/availableservices", async (req, res) => {
+  try {
+    const date = req.query.date || "Dec 8, 2023";
+    const serviceCollection = req.db.collection("services");
+    const appointmentCollection = req.db.collection("appoinment");
+
+    const availAbleServices = await serviceCollection.find().toArray();
+    const BookingDate = { date: date };
+    const bookingAppoinments = await appointmentCollection.find(BookingDate).toArray();
+
+    availAbleServices.forEach((availAbleService) => {
+      const BookedAppoinments = bookingAppoinments.filter(
+        (bk) => bk.department === availAbleService.dept_name
+      );
+      const booked = BookedAppoinments.map((b) => b.slot);
+      const available = availAbleService.slots.filter(
+        (as) => !booked.includes(as)
+      );
+      availAbleService.slots = available;
+    });
+    res.send(availAbleServices);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/booking-appoinment", async (req, res) => {
+  try {
+    const patients_email = req.query.patients_email;
+    const patients_appoinment = await req.db.collection("appoinment")
+      .find({ patients_email })
+      .toArray();
+    res.send(patients_appoinment);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// 6. Reviews
+const ReviewImage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "ReviewerImage");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+const ReviewUpload = multer({ storage: ReviewImage });
+
+app.get("/imagesreview/:filename", function (req, res) {
+  var filename = req.params.filename;
+  res.sendFile(__dirname + "/ReviewerImage/" + filename);
+});
+
+app.post("/review", ReviewUpload.single("file"), async (req, res) => {
+  try {
+    const { reviewer_name, review_details } = req.body;
+    const imageUrl = `http://localhost:5000/imagesreview/${req.file ? req.file.filename : ''}`;
+    const saveReview = await req.db.collection("reviewcollection").insertOne({
+      reviewer_name,
+      review_details,
+      imageUrl,
+    });
+    res.send(saveReview);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/all-review", async (req, res) => {
+  try {
+    const reviews = await req.db.collection("reviewcollection").find({}).toArray();
+    res.send(reviews);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.delete("/delete-review/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const deleteReview = await req.db.collection("reviewcollection").deleteOne(query);
+    res.send(deleteReview);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Local Development Fallback Listener
+if (process.env.NODE_ENV !== "production") {
+  app.listen(port, () => {
+    console.log(`TRISHAL MEDICAL CENTER listening on port ${port}`);
+  });
+}
+
+// EXPORT FOR VERCEL USING serverless-http
+module.exports = serverless(app);
