@@ -30,7 +30,7 @@ async function connectDB() {
         strict: true,
         deprecationErrors: true,
       },
-      connectTimeoutMS: 10000, // Timeout after 10s instead of hanging forever
+      connectTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
   }
@@ -55,6 +55,13 @@ app.use(async (req, res, next) => {
     return res.status(500).json({ error: "Database connection failed" });
   }
 });
+
+// Helper function to generate dynamic base URL (works for both Localhost and Vercel Live)
+const getBaseUrl = (req) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.get('host');
+  return `${protocol}://${host}`;
+};
 
 // --- MULTER & IMAGE STORAGE SETUP ---
 const storageE = multer.diskStorage({
@@ -82,7 +89,8 @@ app.get("/", (req, res) => {
 app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
   try {
     const { name, speciality } = req.body;
-    const imageUrl = `http://localhost:5000/imagesdoctor/${req.file ? req.file.filename : ''}`;
+    const baseUrl = getBaseUrl(req);
+    const imageUrl = `${baseUrl}/imagesdoctor/${req.file ? req.file.filename : ''}`;
     const doctorsCollection = req.db.collection("doctors");
     const saveDoctors = await doctorsCollection.insertOne({ name, speciality, imageUrl });
     res.send(saveDoctors);
@@ -130,7 +138,8 @@ app.get("/imagespackage/:filename", function (req, res) {
 app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) => {
   try {
     const { package_name, package_rate } = req.body;
-    const imageUrl = `http://localhost:5000/imagespackage/${req.file ? req.file.filename : ''}`;
+    const baseUrl = getBaseUrl(req);
+    const imageUrl = `${baseUrl}/imagespackage/${req.file ? req.file.filename : ''}`;
     const collection = req.db.collection("healthpackagecollection");
     const saveHealthPackage = await collection.insertOne({ package_name, package_rate, imageUrl });
     res.send(saveHealthPackage);
@@ -178,7 +187,8 @@ app.get("/images/:filename", function (req, res) {
 app.post("/department", upload.single("file"), async (req, res) => {
   try {
     const { dept_name, description } = req.body;
-    const imageUrl = `http://localhost:5000/images/${req.file ? req.file.filename : ''}`;
+    const baseUrl = getBaseUrl(req);
+    const imageUrl = `${baseUrl}/images/${req.file ? req.file.filename : ''}`;
     const collection = req.db.collection("department");
     const saveDepartment = await collection.insertOne({ dept_name, description, imageUrl });
     res.send(saveDepartment);
@@ -313,7 +323,8 @@ app.get("/imagesreview/:filename", function (req, res) {
 app.post("/review", ReviewUpload.single("file"), async (req, res) => {
   try {
     const { reviewer_name, review_details } = req.body;
-    const imageUrl = `http://localhost:5000/imagesreview/${req.file ? req.file.filename : ''}`;
+    const baseUrl = getBaseUrl(req);
+    const imageUrl = `${baseUrl}/imagesreview/${req.file ? req.file.filename : ''}`;
     const saveReview = await req.db.collection("reviewcollection").insertOne({
       reviewer_name,
       review_details,
@@ -327,7 +338,7 @@ app.post("/review", ReviewUpload.single("file"), async (req, res) => {
 
 app.get("/all-review", async (req, res) => {
   try {
-    const reviews = await req.db.collection("reviewcollection").find({}.toArray());
+    const reviews = await req.db.collection("reviewcollection").find({}).toArray();
     res.send(reviews);
   } catch (error) {
     res.status(500).send({ error: error.message });
