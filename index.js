@@ -203,6 +203,7 @@ async function run() {
       const query = {};
       const department = departmentCollection.find(query);
       const allDepartment = await department.toArray();
+    console.log("Departments data:", allDepartment);
       res.send(allDepartment);
     });
     //get department
