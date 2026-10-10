@@ -5,8 +5,8 @@ const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
-const app = express();
 
+const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -14,40 +14,49 @@ app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.b5qeanx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// MongoDB Connection Caching for Serverless (Prevents connection limits from exhausting)
-let cachedClient = null;
+// Optimized MongoDB Client for Serverless
+let client = null;
+let dbInstance = null;
 
 async function connectDB() {
-  if (cachedClient) {
-    return cachedClient;
+  if (dbInstance) {
+    return dbInstance;
   }
-  const client = new MongoClient(uri, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
-  });
-  await client.connect();
-  cachedClient = client;
-  console.log("Database connected successfully");
-  return client;
+  
+  if (!client) {
+    client = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+      connectTimeoutMS: 10000, // Timeout after 10s instead of hanging forever
+      socketTimeoutMS: 45000,
+    });
+  }
+
+  try {
+    await client.connect();
+    dbInstance = client.db("trishal_medical_center");
+    console.log("Database connected successfully");
+    return dbInstance;
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    throw error;
+  }
 }
 
-// Middleware to attach db client to req so your routes can use it easily
+// Middleware to attach db safely
 app.use(async (req, res, next) => {
   try {
-    req.client = await connectDB();
-    req.db = req.client.db("trishal_medical_center");
+    req.db = await connectDB();
     next();
   } catch (error) {
-    res.status(500).json({ error: "Database connection failed" });
+    return res.status(500).json({ error: "Database connection failed" });
   }
 });
 
 // --- MULTER & IMAGE STORAGE SETUP ---
-// Note: Vercel has a read-only file system. Local folders won't persist permanently, 
-// but this keeps your exact route logic working while you test.
 const storageE = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "Doctorimage");
@@ -318,7 +327,7 @@ app.post("/review", ReviewUpload.single("file"), async (req, res) => {
 
 app.get("/all-review", async (req, res) => {
   try {
-    const reviews = await req.db.collection("reviewcollection").find({}).toArray();
+    const reviews = await req.db.collection("reviewcollection").find({}.toArray());
     res.send(reviews);
   } catch (error) {
     res.status(500).send({ error: error.message });
