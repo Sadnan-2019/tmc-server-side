@@ -1,5 +1,4 @@
 const express = require("express");
-const serverless = require("serverless-http");
 const multer = require("multer");
 const cors = require("cors");
 const fs = require("fs");
@@ -10,6 +9,9 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 
 const app = express();
+
+// Trust Vercel's proxy for secure headers
+app.set('trust proxy', 1);
 
 app.use(cors());
 app.use(express.json());
@@ -33,7 +35,7 @@ async function connectDB() {
   return cachedClient;
 }
 
-// Helper to ensure /tmp subdirectories exist for Vercel
+// Helper to ensure directories exist
 const ensureDir = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -41,41 +43,42 @@ const ensureDir = (dirPath) => {
 };
 
 // --- DIRECTORY & MULTER SETUP ---
-const doctorDir = path.join("/tmp", "Doctorimage");
+// Uses project directory locally, and /tmp automatically when on Vercel
+const baseDir = process.env.VERCEL ? "/tmp" : __dirname;
+
+const doctorDir = path.join(baseDir, "Doctorimage");
 ensureDir(doctorDir);
 const doctorsUpload = multer({ storage: multer.diskStorage({
   destination: (req, file, cb) => cb(null, doctorDir),
-  filename: (req, file, cb) => cb(null, file.originalname),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 })});
 
-const packageDir = path.join("/tmp", "HealthPackageImage");
+const packageDir = path.join(baseDir, "HealthPackageImage");
 ensureDir(packageDir);
 const HealthPackageUpload = multer({ storage: multer.diskStorage({
   destination: (req, file, cb) => cb(null, packageDir),
-  filename: (req, file, cb) => cb(null, file.originalname),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 })});
 
-const deptDir = path.join("/tmp", "image");
+const deptDir = path.join(baseDir, "image");
 ensureDir(deptDir);
 const upload = multer({ storage: multer.diskStorage({
   destination: (req, file, cb) => cb(null, deptDir),
-  filename: (req, file, cb) => cb(null, file.originalname),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 })});
 
-const reviewDir = path.join("/tmp", "ReviewerImage");
+const reviewDir = path.join(baseDir, "ReviewerImage");
 ensureDir(reviewDir);
 const ReviewUpload = multer({ storage: multer.diskStorage({
   destination: (req, file, cb) => cb(null, reviewDir),
-  filename: (req, file, cb) => cb(null, file.originalname),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 })});
-
 
 // --- FILE SERVING ROUTES ---
 app.get("/imagesdoctor/:filename", (req, res) => res.sendFile(path.join(doctorDir, req.params.filename)));
 app.get("/imagespackage/:filename", (req, res) => res.sendFile(path.join(packageDir, req.params.filename)));
 app.get("/images/:filename", (req, res) => res.sendFile(path.join(deptDir, req.params.filename)));
 app.get("/imagesreview/:filename", (req, res) => res.sendFile(path.join(reviewDir, req.params.filename)));
-
 
 // --- API ROUTES ---
 
@@ -94,7 +97,7 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
     const dbClient = await connectDB();
     const { name, speciality } = req.body;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = `${baseUrl}/imagesdoctor/${req.file.filename}`;
+    const imageUrl = req.file ? `${baseUrl}/imagesdoctor/${req.file.filename}` : "";
     const result = await dbClient.db("trishal_medical_center").collection("doctors").insertOne({ name, speciality, imageUrl });
     res.send(result);
   } catch (error) {
@@ -127,7 +130,7 @@ app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) 
     const dbClient = await connectDB();
     const { package_name, package_rate } = req.body;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = `${baseUrl}/imagespackage/${req.file.filename}`;
+    const imageUrl = req.file ? `${baseUrl}/imagespackage/${req.file.filename}` : "";
     const result = await dbClient.db("trishal_medical_center").collection("healthpackagecollection").insertOne({ package_name, package_rate, imageUrl });
     res.send(result);
   } catch (error) {
@@ -160,7 +163,7 @@ app.post("/department", upload.single("file"), async (req, res) => {
     const dbClient = await connectDB();
     const { dept_name, description } = req.body;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = `${baseUrl}/images/${req.file.filename}`;
+    const imageUrl = req.file ? `${baseUrl}/images/${req.file.filename}` : "";
     const result = await dbClient.db("trishal_medical_center").collection("department").insertOne({ dept_name, description, imageUrl });
     res.send(result);
   } catch (error) {
@@ -278,7 +281,7 @@ app.post("/review", ReviewUpload.single("file"), async (req, res) => {
     const dbClient = await connectDB();
     const { reviewer_name, review_details } = req.body;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = `${baseUrl}/imagesreview/${req.file.filename}`;
+    const imageUrl = req.file ? `${baseUrl}/imagesreview/${req.file.filename}` : "";
     const result = await dbClient.db("trishal_medical_center").collection("reviewcollection").insertOne({ reviewer_name, review_details, imageUrl });
     res.send(result);
   } catch (error) {
@@ -300,4 +303,13 @@ app.get("/", (req, res) => {
   res.send("Hello FROM TRISHAL MEDICAL CENTER World!");
 });
 
-module.exports = serverless(app);
+// Local development server listener
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running locally on port ${PORT}`);
+  });
+}
+
+// Correct Vercel-native Express app export
+module.exports = app;
