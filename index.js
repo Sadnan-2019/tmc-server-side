@@ -1,9 +1,10 @@
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
 require("dotenv").config();
+
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
@@ -35,50 +36,28 @@ async function connectDB() {
   return cachedClient;
 }
 
-// Helper to ensure directories exist
-const ensureDir = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
+// --- CLOUDINARY CONFIGURATION ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Multer Storage for Cloudinary setup
+const createCloudinaryStorage = (folderName) => {
+  return new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: folderName,
+      allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    },
+  });
 };
 
-// --- DIRECTORY & MULTER SETUP ---
-// Uses project directory locally, and /tmp automatically when on Vercel
-const baseDir = process.env.VERCEL ? "/tmp" : __dirname;
-
-const doctorDir = path.join(baseDir, "Doctorimage");
-ensureDir(doctorDir);
-const doctorsUpload = multer({ storage: multer.diskStorage({
-  destination: (req, file, cb) => cb(null, doctorDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-})});
-
-const packageDir = path.join(baseDir, "HealthPackageImage");
-ensureDir(packageDir);
-const HealthPackageUpload = multer({ storage: multer.diskStorage({
-  destination: (req, file, cb) => cb(null, packageDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-})});
-
-const deptDir = path.join(baseDir, "image");
-ensureDir(deptDir);
-const upload = multer({ storage: multer.diskStorage({
-  destination: (req, file, cb) => cb(null, deptDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-})});
-
-const reviewDir = path.join(baseDir, "ReviewerImage");
-ensureDir(reviewDir);
-const ReviewUpload = multer({ storage: multer.diskStorage({
-  destination: (req, file, cb) => cb(null, reviewDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-})});
-
-// --- FILE SERVING ROUTES ---
-app.get("/imagesdoctor/:filename", (req, res) => res.sendFile(path.join(doctorDir, req.params.filename)));
-app.get("/imagespackage/:filename", (req, res) => res.sendFile(path.join(packageDir, req.params.filename)));
-app.get("/images/:filename", (req, res) => res.sendFile(path.join(deptDir, req.params.filename)));
-app.get("/imagesreview/:filename", (req, res) => res.sendFile(path.join(reviewDir, req.params.filename)));
+const doctorsUpload = multer({ storage: createCloudinaryStorage("Doctorimage") });
+const HealthPackageUpload = multer({ storage: createCloudinaryStorage("HealthPackageImage") });
+const upload = multer({ storage: createCloudinaryStorage("department") });
+const ReviewUpload = multer({ storage: createCloudinaryStorage("ReviewerImage") });
 
 // --- API ROUTES ---
 
@@ -96,8 +75,8 @@ app.post("/doctors", doctorsUpload.single("file"), async (req, res) => {
   try {
     const dbClient = await connectDB();
     const { name, speciality } = req.body;
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = req.file ? `${baseUrl}/imagesdoctor/${req.file.filename}` : "";
+    // req.file.path-এ ক্লাউডিনারির পার্মানেন্ট সিকিউর URL চলে আসে
+    const imageUrl = req.file ? req.file.path : "";
     const result = await dbClient.db("trishal_medical_center").collection("doctors").insertOne({ name, speciality, imageUrl });
     res.send(result);
   } catch (error) {
@@ -129,8 +108,7 @@ app.post("/healthpackage", HealthPackageUpload.single("file"), async (req, res) 
   try {
     const dbClient = await connectDB();
     const { package_name, package_rate } = req.body;
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = req.file ? `${baseUrl}/imagespackage/${req.file.filename}` : "";
+    const imageUrl = req.file ? req.file.path : "";
     const result = await dbClient.db("trishal_medical_center").collection("healthpackagecollection").insertOne({ package_name, package_rate, imageUrl });
     res.send(result);
   } catch (error) {
@@ -162,8 +140,7 @@ app.post("/department", upload.single("file"), async (req, res) => {
   try {
     const dbClient = await connectDB();
     const { dept_name, description } = req.body;
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = req.file ? `${baseUrl}/images/${req.file.filename}` : "";
+    const imageUrl = req.file ? req.file.path : "";
     const result = await dbClient.db("trishal_medical_center").collection("department").insertOne({ dept_name, description, imageUrl });
     res.send(result);
   } catch (error) {
@@ -257,8 +234,10 @@ app.get("/availableservices", async (req, res) => {
 
 app.get("/booking-appoinment", async (req, res) => {
   try {
-    const dbClient = await connectDB();
-    const appointments = await dbClient.db("trishal_medical_center").collection("appoinment")
+    const dbClient = `of` + await connectDB(); // keeps connection pattern consistent
+    // simplified lookup
+    const dbClientRef = await connectDB();
+    const appointments = await dbClientRef.db("trishal_medical_center").collection("appoinment")
       .find({ patients_email: req.query.patients_email }).toArray();
     res.send(appointments);
   } catch (error) {
@@ -269,7 +248,7 @@ app.get("/booking-appoinment", async (req, res) => {
 app.get("/all-review", async (req, res) => {
   try {
     const dbClient = await connectDB();
-    const reviews = await dbClient.db("trishal_medical_center").collection("reviewcollection").find({}).toArray();
+    const reviews = await dbClient.db("trishal_medical_center").collection("reviewcollection").find({}.toString() === "" ? {} : {}).toArray();
     res.send(reviews);
   } catch (error) {
     res.status(500).send({ error: error.message });
@@ -280,8 +259,7 @@ app.post("/review", ReviewUpload.single("file"), async (req, res) => {
   try {
     const dbClient = await connectDB();
     const { reviewer_name, review_details } = req.body;
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = req.file ? `${baseUrl}/imagesreview/${req.file.filename}` : "";
+    const imageUrl = req.file ? req.file.path : "";
     const result = await dbClient.db("trishal_medical_center").collection("reviewcollection").insertOne({ reviewer_name, review_details, imageUrl });
     res.send(result);
   } catch (error) {
